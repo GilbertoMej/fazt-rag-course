@@ -1,0 +1,63 @@
+-- FMA tracks metadata (Free Music Archive)
+-- 52 columns prefixed by their source table to avoid name collisions
+-- (album/artist/set/track each have id, title, comments, favorites, tags, etc.)
+-- All TEXT for now — analyze and cast later if needed.
+
+CREATE TABLE IF NOT EXISTS public.fma_tracks (
+  track_id TEXT PRIMARY KEY,
+  album_comments TEXT,
+  album_date_created TEXT,
+  album_date_released TEXT,
+  album_engineer TEXT,
+  album_favorites TEXT,
+  album_id TEXT,
+  album_information TEXT,
+  album_listens TEXT,
+  album_producer TEXT,
+  album_tags TEXT,
+  album_title TEXT,
+  album_tracks TEXT,
+  album_type TEXT,
+  artist_active_year_begin TEXT,
+  artist_active_year_end TEXT,
+  artist_associated_labels TEXT,
+  artist_bio TEXT,
+  artist_comments TEXT,
+  artist_date_created TEXT,
+  artist_favorites TEXT,
+  artist_id TEXT,
+  artist_latitude TEXT,
+  artist_location TEXT,
+  artist_longitude TEXT,
+  artist_members TEXT,
+  artist_name TEXT,
+  artist_related_projects TEXT,
+  artist_tags TEXT,
+  artist_website TEXT,
+  artist_wikipedia_page TEXT,
+  set_split TEXT,
+  set_subset TEXT,
+  track_bit_rate TEXT,
+  track_comments TEXT,
+  track_composer TEXT,
+  track_date_created TEXT,
+  track_date_recorded TEXT,
+  track_duration TEXT,
+  track_favorites TEXT,
+  track_genre_top TEXT,
+  track_genres TEXT,
+  track_genres_all TEXT,
+  track_information TEXT,
+  track_interest TEXT,
+  track_language_code TEXT,
+  track_license TEXT,
+  track_listens TEXT,
+  track_lyricist TEXT,
+  track_number TEXT,
+  track_publisher TEXT,
+  track_tags TEXT,
+  track_title TEXT
+);
+
+CREATE INDEX IF NOT EXISTS fma_tracks_track_genre_top_idx
+  ON public.fma_tracks (track_genre_top);
