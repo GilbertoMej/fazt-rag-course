@@ -1,16 +1,9 @@
-import { Plus, MessageSquare, X, Settings, User } from "lucide-react";
+import { Plus, X, Settings, User } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-const mockChats = [
-  { id: "1", title: "Bienvenida a Claude" },
-  { id: "2", title: "Resumen de TypeScript" },
-  { id: "3", title: "Patrones de React" },
-  { id: "4", title: "Diseño de base de datos" },
-];
 
 export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   return (
@@ -41,19 +34,9 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           <span>Nuevo chat</span>
         </button>
 
-        <nav className="sidebar__section" aria-label="Chats recientes">
-          <h2 className="sidebar__section-title">Recientes</h2>
-          <ul className="sidebar__chat-list">
-            {mockChats.map((chat) => (
-              <li key={chat.id}>
-                <button type="button" className="sidebar__chat-item">
-                  <MessageSquare size={14} aria-hidden="true" />
-                  <span className="sidebar__chat-title">{chat.title}</span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        </nav>
+        <div className="sidebar__empty">
+          <p>Sube documentos desde el chat para empezar.</p>
+        </div>
 
         <div className="sidebar__footer">
           <button type="button" className="sidebar__footer-btn">
