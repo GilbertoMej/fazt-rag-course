@@ -1,15 +1,16 @@
 // Hybrid ask edge function.
 //
-// POST { question: string, mode?: "sql" | "rag", match_count?: number, max_rows?: number }
-// mode default = "sql"
+// POST { question: string, mode?: "auto" | "sql" | "rag", match_count?, max_rows? }
+// mode default = "auto"
 //
+// mode = "auto": LLM router classifies the question as sql or rag, then
+//   dispatches to the corresponding handler. Response includes mode_used.
 // mode = "rag": embed question → match_documents → answer from context (RAG)
-//   returns { answer, sources }
-//
+//   returns { answer, sources, mode_used: "rag" }
 // mode = "sql": LLM generates a single PostgreSQL SELECT (schema is hardcoded
 //   in the prompt), validated edge-side and server-side via the run_select
 //   RPC, then a second LLM call writes the Spanish answer from the rows.
-//   returns { answer, sql, rows, row_count }
+//   returns { answer, sql, rows, row_count, mode_used: "sql" }
 
 import { createClient } from "npm:@insforge/sdk";
 import OpenAI from "npm:openai";
@@ -79,6 +80,19 @@ const SQL_ANSWER_SYSTEM = `Eres un asistente que redacta respuestas en español 
 - Si las filas están vacías, di "No hay resultados para esa consulta."
 - No inventes datos que no estén en las filas.`;
 
+const ROUTER_SYSTEM = `Eres un clasificador de intención. Responde SOLO con una palabra:
+- "sql" si la pregunta requiere consultar datos estructurados en una base de datos
+  (tablas, columnas, conteos, agregaciones, filtros, rankings, fechas, números).
+- "rag" si la pregunta requiere información textual, narrativa, explicativa o
+  basada en documentos/conocimiento general.
+
+Reglas:
+- "álbumes con más canciones", "géneros de rock", "artistas por país" → sql
+- "qué es TypeScript", "resume el documento", "explica cómo funciona" → rag
+- Si dudas, responde "rag".
+
+No expliques. Solo una palabra.`;
+
 const FORBIDDEN = /\m(insert|update|delete|drop|alter|truncate|create|grant|revoke|copy|vacuum|reindex)\M/i;
 
 interface Match {
@@ -137,7 +151,10 @@ export default async function (req: Request): Promise<Response> {
     return json({ error: "question required (string)" }, 400);
   }
 
-  const mode = body.mode === "rag" ? "rag" : "sql";
+  const mode: "auto" | "sql" | "rag" =
+    body.mode === "sql" || body.mode === "rag" || body.mode === "auto"
+      ? body.mode
+      : "auto";
 
   const apiKey = Deno.env.get("OPENROUTER_API_KEY");
   const baseUrl = Deno.env.get("INSFORGE_BASE_URL");
@@ -151,7 +168,56 @@ export default async function (req: Request): Promise<Response> {
   const openai = new OpenAI({ baseURL: "https://openrouter.ai/api/v1", apiKey });
 
   if (mode === "rag") return handleRag(req, body, openai, insforge);
-  return handleSql(req, body, openai, insforge);
+  if (mode === "sql") return handleSql(req, body, openai, insforge);
+  return handleAuto(req, body, openai, insforge);
+}
+
+async function routeQuestion(
+  question: string,
+  openai: OpenAI,
+): Promise<"sql" | "rag"> {
+  try {
+    const r = await openai.chat.completions.create({
+      model: CHAT_MODEL,
+      messages: [
+        { role: "system", content: ROUTER_SYSTEM },
+        { role: "user", content: question },
+      ],
+      temperature: 0,
+      max_tokens: 5,
+    });
+    const word = (r.choices[0]?.message?.content ?? "").trim().toLowerCase();
+    return word === "sql" ? "sql" : "rag";
+  } catch {
+    // safest fallback: never execute SQL if router fails
+    return "rag";
+  }
+}
+
+async function handleAuto(
+  req: Request,
+  body: { question: string; match_count?: unknown; max_rows?: unknown },
+  openai: OpenAI,
+  insforge: ReturnType<typeof createClient>,
+): Promise<Response> {
+  const chosen = await routeQuestion(body.question, openai);
+  const resp =
+    chosen === "sql"
+      ? await handleSql(req, body, openai, insforge)
+      : await handleRag(req, body, openai, insforge);
+  // inject mode_used (used for debugging/observability)
+  const text = await resp.text();
+  let parsed: Record<string, unknown>;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return new Response(text, { status: resp.status, headers: resp.headers });
+  }
+  parsed.mode_used = chosen;
+  return new Response(JSON.stringify(parsed), {
+    status: resp.status,
+    headers: { ...Object.fromEntries(resp.headers), "Content-Type": "application/json" },
+  });
 }
 
 async function handleRag(
