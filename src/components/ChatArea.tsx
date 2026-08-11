@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowUp, Sparkles } from "lucide-react";
 import { askQuestion, type Source } from "../lib/rag";
+import FileUploadChips from "./FileUploadChips";
 
 interface Message {
   id: string;
@@ -143,6 +144,7 @@ export default function ChatArea() {
       </div>
 
       <form className="chat__composer" onSubmit={handleSubmit}>
+        <FileUploadChips />
         <div className="chat__composer-inner">
           <textarea
             ref={textareaRef}
