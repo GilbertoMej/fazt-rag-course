@@ -1,29 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { ArrowUp, Paperclip, Sparkles } from "lucide-react";
 
-interface MockMessage {
-  id: string;
-  role: "user" | "assistant";
-  content: string;
-}
-
-const initialMessages: MockMessage[] = [
-  {
-    id: "m1",
-    role: "user",
-    content: "¿Cuál es la diferencia entre let, const y var en JavaScript?",
-  },
-  {
-    id: "m2",
-    role: "assistant",
-    content:
-      "var tiene alcance de función y hoisting; let tiene alcance de bloque y hoisting sin inicialización; const también es de bloque pero no permite reasignación tras la inicialización.",
-  },
-];
-
 export default function ChatArea() {
   const [text, setText] = useState("");
-  const [messages] = useState<MockMessage[]>(initialMessages);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // auto-grow textarea
@@ -38,7 +17,6 @@ export default function ChatArea() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // UI only: no real send
     setText("");
   };
 
@@ -52,25 +30,12 @@ export default function ChatArea() {
   return (
     <main className="chat">
       <div className="chat__scroll">
-        {messages.length === 0 ? (
-          <div className="chat__welcome">
-            <div className="chat__welcome-logo" aria-hidden="true">
-              <Sparkles size={28} />
-            </div>
-            <h1 className="chat__welcome-title">¿Cómo puedo ayudarte hoy?</h1>
+        <div className="chat__welcome">
+          <div className="chat__welcome-logo" aria-hidden="true">
+            <Sparkles size={28} />
           </div>
-        ) : (
-          <ul className="chat__messages" aria-label="Mensajes">
-            {messages.map((msg) => (
-              <li
-                key={msg.id}
-                className={`chat__message chat__message--${msg.role}`}
-              >
-                <div className="chat__bubble">{msg.content}</div>
-              </li>
-            ))}
-          </ul>
-        )}
+          <h1 className="chat__welcome-title">Inicia una conversación o sube documentos</h1>
+        </div>
       </div>
 
       <form className="chat__composer" onSubmit={handleSubmit}>
@@ -102,7 +67,7 @@ export default function ChatArea() {
           </button>
         </div>
         <p className="chat__disclaimer">
-          UI de demostración. Sin lógica de chat real.
+          Las respuestas usan solo los documentos que subas.
         </p>
       </form>
     </main>
