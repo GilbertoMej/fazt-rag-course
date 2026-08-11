@@ -543,3 +543,106 @@ ul {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ---------- typing indicator ---------- */
+.chat__typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 1.5em;
+}
+.chat__typing > span {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: chat-bounce 1.2s infinite ease-in-out;
+}
+.chat__typing > span:nth-child(2) { animation-delay: 0.15s; }
+.chat__typing > span:nth-child(3) { animation-delay: 0.3s; }
+@keyframes chat-bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* ---------- sources ---------- */
+.chat__bubble-text {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+.chat__sources {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+.chat__sources > summary {
+  cursor: pointer;
+  font-weight: 500;
+  user-select: none;
+  list-style: none;
+}
+.chat__sources > summary::before {
+  content: "▸ ";
+  display: inline-block;
+  transition: transform var(--transition);
+}
+.chat__sources[open] > summary::before {
+  content: "▾ ";
+}
+.chat__sources ul {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.chat__source-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text);
+}
+.chat__source-sim {
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(201, 100, 66, 0.12);
+  color: var(--accent);
+  font-weight: 600;
+}
+.chat__source-excerpt {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* ---------- error state ---------- */
+.chat__message--error .chat__bubble {
+  background: #fdecea;
+  border-color: #f3b9b1;
+  color: #8a2a1a;
+}
+@media (prefers-color-scheme: dark) {
+  .chat__message--error .chat__bubble {
+    background: #3b1f1c;
+    border-color: #6b322d;
+    color: #f3b9b1;
+  }
+}
+
+/* ---------- sidebar empty ---------- */
+.sidebar__empty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--sidebar-muted);
+  line-height: 1.4;
+}
