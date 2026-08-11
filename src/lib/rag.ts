@@ -10,6 +10,7 @@ export interface Source {
 export interface AskRagResponse {
   answer: string;
   sources: Source[];
+  mode_used?: "rag";
 }
 
 export interface AskSqlResponse {
@@ -17,9 +18,10 @@ export interface AskSqlResponse {
   sql: string;
   rows: unknown[];
   row_count: number;
+  mode_used?: "sql";
 }
 
-export type AskMode = "rag" | "sql";
+export type AskMode = "rag" | "sql" | "auto";
 export type AskResponse = AskRagResponse | AskSqlResponse;
 
 export interface IngestResponse {
@@ -30,10 +32,15 @@ export interface IngestResponse {
 
 /**
  * Llama al endpoint `ask` con el modo elegido.
- * - mode = "rag" (default): retrieval + LLM sobre `documents`
+ * - mode = "auto" (default): el router LLM decide sql vs rag
+ * - mode = "rag": retrieval + LLM sobre `documents`
  * - mode = "sql": Text-to-SQL sobre `fma_tracks` (u otras tablas)
  */
-export function askQuestion(question: string): Promise<AskRagResponse>;
+export function askQuestion(question: string): Promise<AskResponse>;
+export function askQuestion(
+  question: string,
+  options: { mode: "auto" },
+): Promise<AskResponse>;
 export function askQuestion(
   question: string,
   options: { mode: "rag"; matchCount?: number },
@@ -46,10 +53,10 @@ export async function askQuestion(
   question: string,
   options: { matchCount?: number; mode?: AskMode; maxRows?: number } = {},
 ): Promise<AskResponse> {
-  const { matchCount = 5, mode = "rag", maxRows = 100 } = options;
+  const { matchCount = 5, mode = "auto", maxRows = 100 } = options;
   const body: Record<string, unknown> = { question, mode };
   if (mode === "rag") body.match_count = matchCount;
-  else body.max_rows = maxRows;
+  else if (mode === "sql") body.max_rows = maxRows;
 
   const { data, error } = await insforge.functions.invoke<AskResponse>("ask", {
     body,

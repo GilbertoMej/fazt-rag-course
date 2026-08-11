@@ -52,10 +52,11 @@ export default function ChatArea() {
     setBusy(true);
     try {
       const res = await askQuestion(question);
+      const sources = "sources" in res ? res.sources : undefined;
       setMessages((prev) =>
         prev.map((m) =>
           m.id === pendingMsg.id
-            ? { ...m, content: res.answer, sources: res.sources, pending: false }
+            ? { ...m, content: res.answer, sources, pending: false }
             : m,
         ),
       );
